@@ -16,65 +16,67 @@ const mongoOptions = { useNewUrlParser: true };
 io.on('connection', socket => {
 
   console.log('New client connected')
-  
+
   // get data
   socket.on("initial_data", () => {
-    
+
     mongoClient.connect(url, function (err, db) {
+
       if (err) throw err;
       var dbo = db.db("JSPolling");
       console.log("db init connected ! ");
-
+      
+      //
       // dbo.collection("tJSPollings").find({ "jsLib" : {
       //   "$ne" : "--none-"
-      //   }}, 
-      //   { 
-      //       "jsLib" : "$jsLib"
-      //   }).toArray( function( err,results) {
-      //      if (err) throw err;  
-      //      console.log( "find data : ", results);
-      //      io.sockets.emit("get_data", results  );
-      //      db.close();
+      // }}, 
+      // { 
+      //     "jsLib" : "$jsLib"
+      // }).toArray( function( err,results) {
+      //     if (err) throw err;  
+      //     console.log( "find data : ", results);
+      //     io.sockets.emit("get_data", results  );
+      //     db.close();
       // });
+      ///
 
       dbo.collection("tJSPollings").aggregate(
         [
-            { 
-                "$match" : {
-                    "jsLib" : {
-                        "$ne" : "--none-"
-                    }
-                }
-            }, 
-            { 
-                "$group" : {
-                    "_id" : {
-                        "jsLib" : "$jsLib"
-                    }, 
-                    "COUNT(jsLib)" : {
-                        "$sum" : 1
-                    }
-                }
-            }, 
-            { 
-                "$project" : {
-                    "jsLib" : "$_id.jsLib", 
-                    "votes" : "$COUNT(jsLib)", 
-                    "_id" : 0
-                }
+          {
+            "$match": {
+              "jsLib": {
+                "$ne": "--none-"
+              }
             }
-        ], 
-        { 
-            "allowDiskUse" : true
+          },
+          {
+            "$group": {
+              "_id": {
+                "jsLib": "$jsLib"
+              },
+              "COUNT(jsLib)": {
+                "$sum": 1
+              }
+            }
+          },
+          {
+            "$project": {
+              "jsLib": "$_id.jsLib",
+              "votes": "$COUNT(jsLib)",
+              "_id": 0
+            }
+          }
+        ],
+        {
+          "allowDiskUse": true
         }
-    ).toArray( function( err,results) {
-      if (err) throw err;  
-      console.log( "find data : ", results);
-      io.sockets.emit("get_data", results  );
-      db.close();
+      ).toArray(function (err, results) {
+        if (err) throw err;
+        console.log("find data : ", results);
+        io.sockets.emit("get_data", results);
+        db.close();
+      });
     });
-
-    });  
   });
   ///
 
@@ -85,7 +87,7 @@ io.on('connection', socket => {
       if (err) throw err;
       var dbo = db.db("JSPolling");
       console.log("db vote connected ! ");
-
+      
       dbo.collection("tJSPollings").insertOne(myPolling,
         function (err, res) {
           if (err) throw err;
@@ -102,6 +104,7 @@ io.on('connection', socket => {
   socket.on('disconnect', () => {
     console.log('user disconnected')
   })
+  ///
 
 })
 
