@@ -24,27 +24,56 @@ io.on('connection', socket => {
       if (err) throw err;
       var dbo = db.db("JSPolling");
       console.log("db init connected ! ");
-     
-      // dbo.collection("tJSPollings").find({}, 
-      //     { 
-      //         "jsLib" : "$jsLib", 
-      //         "_id" : 0
-      //     }).toArray( function( err,results) {
-      //        if (err) throw err;  
-      //        console.log( "find data : ", results);
-      //        sockets.emit("get_data", results );
-      //        db.close();
-      //  });
 
-       dbo.collection("tJSPollings").find({}, 
+      // dbo.collection("tJSPollings").find({ "jsLib" : {
+      //   "$ne" : "--none-"
+      //   }}, 
+      //   { 
+      //       "jsLib" : "$jsLib"
+      //   }).toArray( function( err,results) {
+      //      if (err) throw err;  
+      //      console.log( "find data : ", results);
+      //      io.sockets.emit("get_data", results  );
+      //      db.close();
+      // });
+
+      dbo.collection("tJSPollings").aggregate(
+        [
+            { 
+                "$match" : {
+                    "jsLib" : {
+                        "$ne" : "--none-"
+                    }
+                }
+            }, 
+            { 
+                "$group" : {
+                    "_id" : {
+                        "jsLib" : "$jsLib"
+                    }, 
+                    "COUNT(jsLib)" : {
+                        "$sum" : 1
+                    }
+                }
+            }, 
+            { 
+                "$project" : {
+                    "jsLib" : "$_id.jsLib", 
+                    "votes" : "$COUNT(jsLib)", 
+                    "_id" : 0
+                }
+            }
+        ], 
         { 
-            "jsLib" : "$jsLib"
-        }).toArray( function( err,results) {
-           if (err) throw err;  
-           console.log( "find data : ", results);
-           io.sockets.emit("get_data", results  );
-           db.close();
-     });
+            "allowDiskUse" : true
+        }
+    ).toArray( function( err,results) {
+      if (err) throw err;  
+      console.log( "find data : ", results);
+      io.sockets.emit("get_data", results  );
+      db.close();
+    });
+
     });  
   });
   ///

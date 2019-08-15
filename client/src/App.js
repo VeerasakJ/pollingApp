@@ -41,6 +41,7 @@ class App extends Component {
     socket.on('get_data',(result) => {
       this.setResult(result);
       document.getElementById("votes_result").innerText = " all vote is : "+ JSON.stringify( result )
+      
     })
   }
   ///
