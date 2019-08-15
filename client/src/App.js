@@ -40,7 +40,7 @@ class App extends Component {
     setInterval(this.send(), 1000)
     socket.on('get_data',(result) => {
       this.setResult(result);
-      document.getElementById("votes_result").innerText = " all vote is : "+  result 
+      document.getElementById("votes_result").innerText = " all vote is : "+ JSON.stringify( result )
     })
   }
   ///
