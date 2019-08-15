@@ -1,8 +1,8 @@
 import React, { Component } from "react";
 import socketIOClient from "socket.io-client";
 import Button from '@material-ui/core/Button';
-import Chart from './components/Chart';
 import logo from './logo.svg';
+import { Bar } from 'react-chartjs-2';
 
 class App extends Component {
 
@@ -12,7 +12,9 @@ class App extends Component {
       endpoint: "localhost:4001",
       id: 0,
       jsLib: '--none-',
-      result: []      
+      labels: {},
+      votes: {},
+      chartData: {}
     };
   }
 
@@ -28,30 +30,62 @@ class App extends Component {
   setData = (id, jsLib) => {
     this.setState({ id, jsLib })
   }
+  ///
 
-  setResult = (result) => {
-    this.setState({result})
-  }    
+  //
+  setResult = (labels, votes) => {
+    this.setState({ labels, votes })
+  }
+  ///
+
+  // chart 
+  getChartData() {
+    this.setState({
+      chartData: {
+        labels: this.state.labels,
+        datasets: [
+          {
+            data: this.state.votes,
+            fill: false,
+            borderColor: 'green'
+          }
+        ]
+      }
+    });
+  }
   ///
 
   //
   componentDidMount = () => {
+
     const socket = socketIOClient(this.state.endpoint);
     setInterval(this.send(), 1000)
-    socket.on('get_data',(result) => {
-      this.setResult(result);
-      document.getElementById("votes_result").innerText = " all vote is : "+ JSON.stringify( result )
-      
+
+    socket.on('get_data', (result) => {
+      var labels = result.map(function (e) {
+        return e.jsLib;
+      });
+
+      var values = result.map(function (e) {
+        return e.votes;
+      });
+
+      this.setResult(labels, values);
+      this.getChartData();
+
+      // document.getElementById("votes").innerText = "after set JSfamework : " + this.state.labels
+      // document.getElementById("votes_result").innerText = " votes: " + values
+
     })
+
   }
   ///
+
 
   render() {
     const socket = socketIOClient(this.state.endpoint);
     return (
       <div style={{ textAlign: "center", paddingTop: "10px" }}>
-
-         
         <div className="row">
 
           <div className="col-4">
@@ -73,17 +107,36 @@ class App extends Component {
             <br></br>
             <Button variant="contained" color="primary" onClick={() => this.send()}>Vote</Button>
           </div>
-          
+
           <div className="col-8">
-            <p><label id="votes"></label></p>
-            <p><label id="votes_result"></label></p>
+            
+            <h1> Most favorit JS Framework  </h1>
             <div className="App">
               <div className="App-header">
               </div>
-              <Chart></Chart>
+
+              {/* --  barchart -- */}
+              <div className="chart" >
+                <Bar
+                  // Test manual 
+                  //  data= {{"labels":["ember","vue","angular","react"],
+                  //   "datasets":[{"data":[45,24,18,49],"fill":false,"borderColor":"green"}]}}
+                  data={this.state.chartData}
+                  options={{
+                    title: {
+                      display: this.props.displayTitle,
+                      text: 'Favorit JS ',
+                      fontSize: 25
+                    },
+                    legend: {
+                      display: this.props.displayLegend,
+                      position: this.props.legendPosition
+                    }
+                  }}
+                />
+              </div>
             </div>
           </div>
-
         </div>
       </div>
     )
